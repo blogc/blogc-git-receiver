@@ -1,0 +1,40 @@
+# Object files
+*.o
+*.ko
+
+# Libraries
+*.lib
+*.a
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Autotools
+Makefile
+Makefile.in
+.deps
+.libs
+*.la
+*.lo
+/aclocal.m4
+/configure
+/config.*
+/autom4te.cache
+/libtool
+/stamp-h1
+.dirstamp
+/build-aux/*
+
+# binary
+/blogc-git-receiver
+
+# tarballs
+blogc-git-receiver-*.tar.*
