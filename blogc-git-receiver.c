@@ -59,15 +59,15 @@ static int
 git_shell(int argc, char *argv[])
 {
     // validate call
-    if (argc != 3 || (0 != strncmp(argv[1], "-c", 2))) {
+    if (argc != 3 || (0 != strcmp(argv[1], "-c"))) {
         fprintf(stderr, "error: invalid blogc-git-receiver call\n");
         return 1;
     }
 
     // validate git command
-    if (!((0 == strncmp(argv[2], "git-receive-pack", 16)) ||
-          (0 == strncmp(argv[2], "git-upload-pack", 15)) ||
-          (0 == strncmp(argv[2], "git-upload-archive", 18))))
+    if (!((0 == strncmp(argv[2], "git-receive-pack ", 17)) ||
+          (0 == strncmp(argv[2], "git-upload-pack ", 16)) ||
+          (0 == strncmp(argv[2], "git-upload-archive ", 19))))
     {
         fprintf(stderr, "error: unsupported git command: %s\n", argv[2]);
         return 1;
@@ -258,7 +258,7 @@ git_hook(int argc, char *argv[])
 int
 main(int argc, char *argv[])
 {
-    if (argc > 0 && (0 == strncmp(basename(argv[0]), "pre-receive", 11)))
+    if (argc > 0 && (0 == strcmp(basename(argv[0]), "pre-receive")))
         return git_hook(argc, argv);
 
     return git_shell(argc, argv);
