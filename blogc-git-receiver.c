@@ -64,12 +64,6 @@ git_shell(int argc, char *argv[])
 {
     char buffer[BUFFER_SIZE];
 
-    // validate call
-    if (argc != 3 || (0 != strcmp(argv[1], "-c"))) {
-        fprintf(stderr, "error: invalid blogc-git-receiver call\n");
-        return 1;
-    }
-
     // validate git command
     if (!((0 == strncmp(argv[2], "git-receive-pack ", 17)) ||
           (0 == strncmp(argv[2], "git-upload-pack ", 16)) ||
@@ -282,5 +276,9 @@ main(int argc, char *argv[])
     if (argc > 0 && (0 == strcmp(basename(argv[0]), "pre-receive")))
         return git_hook(argc, argv);
 
-    return git_shell(argc, argv);
+    if (argc == 3 && (0 == strcmp(argv[1], "-c")))
+        return git_shell(argc, argv);
+
+    fprintf(stderr, "error: this is a special shell, go away!\n");
+    return 1;
 }
