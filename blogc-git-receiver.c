@@ -20,6 +20,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#ifndef BUFFER_SIZE
+#define BUFFER_SIZE 1024
+#endif
+
 
 static void
 mkdir_recursive(const char *filename)
@@ -58,6 +62,8 @@ mkdir_recursive(const char *filename)
 static int
 git_shell(int argc, char *argv[])
 {
+    char buffer[BUFFER_SIZE];
+
     // validate call
     if (argc != 3 || (0 != strcmp(argv[1], "-c"))) {
         fprintf(stderr, "error: invalid blogc-git-receiver call\n");
@@ -89,24 +95,30 @@ git_shell(int argc, char *argv[])
 
     // get git repository
     char *p, *r, *command = strdup(argv[2]);
-    for (p = command; *p != ' '; *p++);
+    for (p = command; *p != ' ' && *p != '\0'; *p++);
     if (*p == ' ')
         *p++;
     if (*p == '\'' || *p == '"')
         *p++;
     if (*p == '/')
         *p++;
-    for (r = p; *p != '\'' && *p != '"'; *p++);
+    for (r = p; *p != '\'' && *p != '"' && *p != '\0'; *p++);
     if (*p == '\'' || *p == '"')
         *p = '\0';
     if (*--p == '/')
         *p = '\0';
 
-    char *repo = strdup(r);
+    if (BUFFER_SIZE < (strlen(r) + 7)) {
+        fprintf(stderr, "error: repository name is too big\n");
+        free(command);
+        return 1;
+    }
+
+    snprintf(buffer, BUFFER_SIZE, "repos/%s", r);
     free(command);
 
     // check if repository is sane
-    if (0 == strlen(repo)) {
+    if (0 == strlen(buffer)) {
         fprintf(stderr, "error: invalid repository\n");
         return 1;
     }
@@ -117,13 +129,13 @@ git_shell(int argc, char *argv[])
         return 1;
     }
 
-    bool exists = (0 == access(repo, F_OK));
+    bool exists = (0 == access(buffer, F_OK));
 
     if (!exists)
-        mkdir_recursive(repo);
+        mkdir_recursive(buffer);
 
-    if (0 != chdir(repo)) {
-        fprintf(stderr, "error: failed to chdir (%s/%s): %s\n", home, repo,
+    if (0 != chdir(buffer)) {
+        fprintf(stderr, "error: failed to chdir (%s/%s): %s\n", home, buffer,
             strerror(errno));
         return 1;
     }
@@ -131,28 +143,28 @@ git_shell(int argc, char *argv[])
     if (!exists) {
         if (0 != system(GIT_BINARY " init --bare > /dev/null")) {
             fprintf(stderr, "error: failed to create git repository: %s\n",
-                repo);
+                buffer);
             return 1;
         }
     }
 
     if (0 != chdir("hooks")) {
         fprintf(stderr, "error: failed to chdir (%s/%s/hooks): %s\n", home,
-            repo, strerror(errno));
+            buffer, strerror(errno));
         return 1;
     }
 
     if (0 == access("pre-receive", F_OK)) {
         if (0 != unlink("pre-receive")) {
             fprintf(stderr, "error: failed to remove old symlink "
-                "(%s/%s/hooks/pre-receive): %s", home, repo, strerror(errno));
+                "(%s/%s/hooks/pre-receive): %s", home, buffer, strerror(errno));
             return 1;
         }
     }
 
     if (0 != symlink(self, "pre-receive")) {
         fprintf(stderr, "error: failed to create symlink "
-            "(%s/%s/hooks/pre-receive): %s", home, repo, strerror(errno));
+            "(%s/%s/hooks/pre-receive): %s", home, buffer, strerror(errno));
         return 1;
     }
 
@@ -162,10 +174,19 @@ git_shell(int argc, char *argv[])
         return 1;
     }
 
+    command = strdup(argv[2]);
+    for (p = command; *p != ' ' & *p != '\0'; *p++);
+    if (*p == ' ')
+        *p = '\0';
+    char *repo = strdup(buffer);
+    snprintf(buffer, BUFFER_SIZE, "%s '%s'", command, repo);
+    free(command);
+    free(repo);
+
     char *args[4];
     args[0] = GIT_SHELL_BINARY;
-    args[1] = argv[1];
-    args[2] = argv[2];
+    args[1] = "-c";
+    args[2] = buffer;
     args[3] = NULL;
 
     execv(GIT_SHELL_BINARY, args);
@@ -186,7 +207,7 @@ typedef enum {
 static int
 git_hook(int argc, char *argv[])
 {
-    char c, buffer[1024];
+    char c, buffer[BUFFER_SIZE];
 
     input_state_t state = START_OLD;
     size_t i = 0;
@@ -238,7 +259,7 @@ git_hook(int argc, char *argv[])
                 break;
         }
 
-        if (++i >= 1024) {
+        if (++i >= BUFFER_SIZE) {
             fprintf(stderr, "error: pre-receive hook payload is too big.\n");
             return 1;
         }
