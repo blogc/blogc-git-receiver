@@ -10,6 +10,7 @@
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,44 +26,47 @@
 #endif
 
 
-static void
-mkdir_recursive(const char *filename)
+char*
+b_strdup_vprintf(const char *format, va_list ap)
 {
-    mode_t m = umask(0);
-    umask(m);
-    mode_t mode = (S_IRWXU | S_IRWXG | S_IRWXO) & ~m;
-    char *fname = strdup(filename);
-
-    for (char *tmp = fname; *tmp != '\0'; tmp++) {
-        if (*tmp == '/') {
-            char bkp = *tmp;
-            *tmp = '\0';
-            if ((0 < strlen(fname)) &&
-                (-1 == mkdir(fname, mode)) &&
-                (errno != EEXIST))
-            {
-                fprintf(stderr, "error: failed to create directory (%s): %s\n",
-                    fname, strerror(errno));
-                free(fname);
-                exit(2);
-            }
-            *tmp = bkp;
-        }
+    va_list ap2;
+    va_copy(ap2, ap);
+    int l = vsnprintf(NULL, 0, format, ap2);
+    va_end(ap2);
+    if (l < 0)
+        return NULL;
+    char *tmp = malloc(l + 1);
+    if (!tmp)
+        return NULL;
+    int l2 = vsnprintf(tmp, l + 1, format, ap);
+    if (l2 < 0) {
+        free(tmp);
+        return NULL;
     }
-    free(fname);
+    return tmp;
+}
 
-    if ((-1 == mkdir(filename, mode)) && (errno != EEXIST)) {
-        fprintf(stderr, "error: failed to create directory (%s): %s\n",
-            filename, strerror(errno));
-        exit(2);
-    }
+
+char*
+b_strdup_printf(const char *format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+    char *tmp = b_strdup_vprintf(format, ap);
+    va_end(ap);
+    return tmp;
 }
 
 
 static int
 git_shell(int argc, char *argv[])
 {
-    char buffer[BUFFER_SIZE];
+    int rv = 0;
+
+    char *repo = NULL;
+    char *command_orig = NULL;
+    char *command_name = NULL;
+    char *command_new = NULL;
 
     // validate git command
     if (!((0 == strncmp(argv[2], "git-receive-pack ", 17)) ||
@@ -70,26 +74,30 @@ git_shell(int argc, char *argv[])
           (0 == strncmp(argv[2], "git-upload-archive ", 19))))
     {
         fprintf(stderr, "error: unsupported git command: %s\n", argv[2]);
-        return 1;
+        rv = 1;
+        goto cleanup;
     }
 
     // get shell path
     char *self = getenv("SHELL");
     if (self == NULL) {
         fprintf(stderr, "error: failed to find blogc-git-receiver path\n");
-        return 1;
+        rv = 1;
+        goto cleanup;
     }
 
     // get home path
     char *home = getenv("HOME");
     if (home == NULL) {
         fprintf(stderr, "error: failed to find user home path\n");
-        return 1;
+        rv = 1;
+        goto cleanup;
     }
 
     // get git repository
-    char *p, *r, *command = strdup(argv[2]);
-    for (p = command; *p != ' ' && *p != '\0'; *p++);
+    command_orig = strdup(argv[2]);
+    char *p, *r;
+    for (p = command_orig; *p != ' ' && *p != '\0'; *p++);
     if (*p == ' ')
         *p++;
     if (*p == '\'' || *p == '"')
@@ -102,89 +110,92 @@ git_shell(int argc, char *argv[])
     if (*--p == '/')
         *p = '\0';
 
-    if (BUFFER_SIZE < (strlen(r) + 7)) {
-        fprintf(stderr, "error: repository name is too big\n");
-        free(command);
-        return 1;
-    }
-
-    snprintf(buffer, BUFFER_SIZE, "repos/%s", r);
-    free(command);
+    repo = b_strdup_printf("repos/%s", r);
 
     // check if repository is sane
-    if (0 == strlen(buffer)) {
+    if (0 == strlen(repo)) {
         fprintf(stderr, "error: invalid repository\n");
-        return 1;
+        rv = 1;
+        goto cleanup;
     }
 
     if (0 != chdir(home)) {
         fprintf(stderr, "error: failed to chdir (%s): %s\n", home,
             strerror(errno));
-        return 1;
+        rv = 1;
+        goto cleanup;
     }
 
-    bool exists = (0 == access(buffer, F_OK));
-
-    if (!exists)
-        mkdir_recursive(buffer);
-
-    if (0 != chdir(buffer)) {
-        fprintf(stderr, "error: failed to chdir (%s/%s): %s\n", home, buffer,
-            strerror(errno));
-        return 1;
-    }
-
-    if (!exists) {
-        if (0 != system(GIT_BINARY " init --bare > /dev/null")) {
+    if (0 != access(repo, F_OK)) {
+        char *git_init_cmd = b_strdup_printf(
+            GIT_BINARY " init --bare \"%s\" > /dev/null", repo);
+        if (0 != system(git_init_cmd)) {
             fprintf(stderr, "error: failed to create git repository: %s\n",
-                buffer);
-            return 1;
+                repo);
+            rv = 1;
+            free(git_init_cmd);
+            goto cleanup;
         }
+        free(git_init_cmd);
+    }
+
+    if (0 != chdir(repo)) {
+        fprintf(stderr, "error: failed to chdir (%s/%s): %s\n", home, repo,
+            strerror(errno));
+        rv = 1;
+        goto cleanup;
     }
 
     if (0 != chdir("hooks")) {
         fprintf(stderr, "error: failed to chdir (%s/%s/hooks): %s\n", home,
-            buffer, strerror(errno));
-        return 1;
+            repo, strerror(errno));
+        rv = 1;
+        goto cleanup;
     }
 
     if (0 == access("pre-receive", F_OK)) {
         if (0 != unlink("pre-receive")) {
             fprintf(stderr, "error: failed to remove old symlink "
-                "(%s/%s/hooks/pre-receive): %s", home, buffer, strerror(errno));
-            return 1;
+                "(%s/%s/hooks/pre-receive): %s", home, repo, strerror(errno));
+            rv = 1;
+            goto cleanup;
         }
     }
 
     if (0 != symlink(self, "pre-receive")) {
         fprintf(stderr, "error: failed to create symlink "
-            "(%s/%s/hooks/pre-receive): %s", home, buffer, strerror(errno));
-        return 1;
+            "(%s/%s/hooks/pre-receive): %s", home, repo, strerror(errno));
+        rv = 1;
+        goto cleanup;
     }
 
     if (0 != chdir(home)) {
         fprintf(stderr, "error: failed to chdir (%s): %s\n", home,
             strerror(errno));
-        return 1;
+        rv = 1;
+        goto cleanup;
     }
 
-    command = strdup(argv[2]);
-    for (p = command; *p != ' ' & *p != '\0'; *p++);
+    command_name = strdup(argv[2]);
+    for (p = command_name; *p != ' ' & *p != '\0'; *p++);
     if (*p == ' ')
         *p = '\0';
-    char *repo = strdup(buffer);
-    snprintf(buffer, BUFFER_SIZE, "%s '%s'", command, repo);
-    free(command);
-    free(repo);
+    command_new = b_strdup_printf("%s '%s'", command_name, repo);
 
     char *args[4];
     args[0] = GIT_SHELL_BINARY;
     args[1] = "-c";
-    args[2] = buffer;
+    args[2] = command_new;
     args[3] = NULL;
 
     execv(GIT_SHELL_BINARY, args);
-    return 0;
+
+cleanup:
+    free(repo);
+    free(command_orig);
+    free(command_name);
+    free(command_new);
+    return rv;
 }
 
 
@@ -201,12 +212,13 @@ typedef enum {
 static int
 git_hook(int argc, char *argv[])
 {
-    char c, buffer[BUFFER_SIZE];
+    char c, buffer[BUFFER_SIZE], *rm_cmd;
 
     input_state_t state = START_OLD;
     size_t i = 0;
     size_t start = 0;
 
+    int rv = 0;
     char *new = NULL;
 
     while (EOF != (c = getc(stdin))) {
@@ -255,18 +267,69 @@ git_hook(int argc, char *argv[])
 
         if (++i >= BUFFER_SIZE) {
             fprintf(stderr, "error: pre-receive hook payload is too big.\n");
-            return 1;
+            rv = 1;
+            goto cleanup2;
         }
     }
 
     if (new == NULL) {
-        fprintf(stderr,
-            "No reference to master branch found. Nothing to deploy.\n");
-        return 0;
+        fprintf(stderr, "warning: no reference to master branch found. "
+            "Nothing to deploy.\n");
+        goto cleanup2;
     }
 
+    char dir[] = "/tmp/blogc_XXXXXX";
+    if (NULL == mkdtemp(dir)) {
+        rv = 1;
+        goto cleanup;
+    }
+
+    char *git_archive_cmd = b_strdup_printf(GIT_BINARY " archive \"%s\" | "
+        TAR_BINARY " -x -C \"%s\"", new, dir);
+    if (0 != system(git_archive_cmd)) {
+        fprintf(stderr, "error: failed to extract git content to temporary "
+            "directory: %s\n", dir);
+        rv = 1;
+        free(git_archive_cmd);
+        goto cleanup;
+    }
+    free(git_archive_cmd);
+
+    if (0 != chdir(dir)) {
+        fprintf(stderr, "error: failed to chdir (%s): %s\n", dir,
+            strerror(errno));
+        rv = 1;
+        goto cleanup;
+    }
+
+    if ((0 != access("Makefile", F_OK)) && (0 != access("GNUMakefile", F_OK))) {
+        fprintf(stderr, "warning: no makefile found. skipping ...\n");
+        goto cleanup;
+    }
+
+    char *gmake_cmd = b_strdup_printf(GMAKE_BINARY " OUTPUT_DIR=_buildroot");
+    if (0 != system(gmake_cmd)) {
+        fprintf(stderr, "error: failed to build website ...\n");
+        rv = 1;
+        goto cleanup;
+    }
+    free(gmake_cmd);
+
     fprintf(stderr, "%s\n", new);
-    return 0;
+
+
+cleanup:
+    rm_cmd = b_strdup_printf("rm -rf \"%s\"", dir);
+    if (0 != system(rm_cmd)) {
+        fprintf(stderr, "error: failed to remove temporary directory: %s\n",
+            dir);
+        free(rm_cmd);
+        return 0;
+    }
+    free(rm_cmd);
+cleanup2:
+    free(new);
+    return rv;
 }
 
 

@@ -34,6 +34,12 @@ AS_IF([test "x$ac_cv_path_gmake" = "x"], [
 AC_DEFINE_UNQUOTED([GMAKE_BINARY], ["$ac_cv_path_gmake"],
   [gmake binary path])
 
+AC_PATH_PROG([tar], [tar])
+AS_IF([test "x$ac_cv_path_tar" = "x"], [
+  AC_MSG_ERROR([tar not found.])])
+AC_DEFINE_UNQUOTED([TAR_BINARY], ["$ac_cv_path_tar"],
+  [tar binary path])
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 
