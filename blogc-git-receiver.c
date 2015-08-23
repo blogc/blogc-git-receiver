@@ -65,9 +65,9 @@ rmdir_recursive(const char *dir)
 {
     struct stat buf;
     if (0 != stat(dir, &buf)) {
-        fprintf(stderr, "error: failed to remove directory (%s): %s\n", dir,
+        fprintf(stderr, "warning: failed to remove directory (%s): %s\n", dir,
             strerror(errno));
-        exit(2);
+        return;
     }
     if (!S_ISDIR(buf.st_mode)) {
         fprintf(stderr, "error: trying to remove invalid directory: %s\n", dir);
@@ -379,6 +379,7 @@ git_hook(int argc, char *argv[])
     if (0 != system(gmake_cmd)) {
         fprintf(stderr, "error: failed to build website ...\n");
         rv = 1;
+        rmdir_recursive(output_dir);
         free(output_dir);
         free(gmake_cmd);
         goto cleanup;
