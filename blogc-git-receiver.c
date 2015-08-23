@@ -276,6 +276,7 @@ git_hook(int argc, char *argv[])
 
     int rv = 0;
     char *new = NULL;
+    char *master = NULL;
 
     while (EOF != (c = getc(stdin))) {
 
@@ -317,7 +318,9 @@ git_hook(int argc, char *argv[])
                 {
                     free(new);
                     new = NULL;
+                    break;
                 }
+                master = new;
                 break;
         }
 
@@ -328,7 +331,7 @@ git_hook(int argc, char *argv[])
         }
     }
 
-    if (new == NULL) {
+    if (master == NULL) {
         fprintf(stderr, "warning: no reference to master branch found. "
             "nothing to deploy.\n");
         goto cleanup2;
@@ -341,7 +344,7 @@ git_hook(int argc, char *argv[])
     }
 
     char *git_archive_cmd = b_strdup_printf(GIT_BINARY " archive \"%s\" | "
-        TAR_BINARY " -x -C \"%s\"", new, dir);
+        TAR_BINARY " -x -C \"%s\"", master, dir);
     if (0 != system(git_archive_cmd)) {
         fprintf(stderr, "error: failed to extract git content to temporary "
             "directory: %s\n", dir);
@@ -373,7 +376,7 @@ git_hook(int argc, char *argv[])
     }
 
     unsigned long epoch = time(NULL);
-    char *output_dir = b_strdup_printf("%s/builds/%s-%lu", home, new, epoch);
+    char *output_dir = b_strdup_printf("%s/builds/%s-%lu", home, master, epoch);
     char *gmake_cmd = b_strdup_printf(GMAKE_BINARY " OUTPUT_DIR=\"%s\"",
         output_dir);
     if (0 != system(gmake_cmd)) {
