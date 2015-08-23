@@ -330,7 +330,7 @@ git_hook(int argc, char *argv[])
 
     if (new == NULL) {
         fprintf(stderr, "warning: no reference to master branch found. "
-            "Nothing to deploy.\n");
+            "nothing to deploy.\n");
         goto cleanup2;
     }
 
