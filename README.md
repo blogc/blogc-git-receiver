@@ -4,6 +4,10 @@ A simple login shell/git hook to deploy blogc websites.
 
 `blogc-git-receiver` provides a PaaS-like way to deploy your blogc websites. When used as a login shell, it will accept git payloads, creating bare repositories as needed, and installing a hook, that will take care of building your website each time you push something to the `master` branch.
 
+The git repository must provide a `Makefile` (or a `GNUMakefile`), that should accept the `OUTPUT_DIR` variable, and install built files in the directory pointed by this variable.
+
+`blogc-git-receiver` is part of `blogc` project, but isn't tied to `blogc`. Any repository with `Makefile` that builds content and install it to `OUTPUT_DIR` should works with `blogc-git-receiver`.
+
 ## Example setup
 
 Download a [release tarball](https://github.com/blogc/blogc-git-receiver/releases), extract it and enter its directory, after that run the following commands:
