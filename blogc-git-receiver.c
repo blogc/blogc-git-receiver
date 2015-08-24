@@ -153,14 +153,14 @@ git_shell(int argc, char *argv[])
     // get git repository
     command_orig = strdup(argv[2]);
     char *p, *r;
-    for (p = command_orig; *p != ' ' && *p != '\0'; *p++);
+    for (p = command_orig; *p != ' ' && *p != '\0'; p++);
     if (*p == ' ')
-        *p++;
+        p++;
     if (*p == '\'' || *p == '"')
-        *p++;
+        p++;
     if (*p == '/')
-        *p++;
-    for (r = p; *p != '\'' && *p != '"' && *p != '\0'; *p++);
+        p++;
+    for (r = p; *p != '\'' && *p != '"' && *p != '\0'; p++);
     if (*p == '\'' || *p == '"')
         *p = '\0';
     if (*--p == '/')
@@ -233,7 +233,7 @@ git_shell(int argc, char *argv[])
     }
 
     command_name = strdup(argv[2]);
-    for (p = command_name; *p != ' ' & *p != '\0'; *p++);
+    for (p = command_name; *p != ' ' & *p != '\0'; p++);
     if (*p == ' ')
         *p = '\0';
     command_new = b_strdup_printf("%s '%s'", command_name, repo);
@@ -268,7 +268,7 @@ typedef enum {
 static int
 git_hook(int argc, char *argv[])
 {
-    char c, buffer[BUFFER_SIZE], *rm_cmd;
+    char c, buffer[BUFFER_SIZE];
 
     input_state_t state = START_OLD;
     size_t i = 0;
@@ -337,6 +337,17 @@ git_hook(int argc, char *argv[])
         goto cleanup2;
     }
 
+    char *repo_dir = NULL;
+
+    if (NULL == getcwd(buffer, BUFFER_SIZE)) {
+        fprintf(stderr, "error: failed to get repository remote path: %s\n",
+            strerror(errno));
+        rv = 1;
+        goto cleanup;
+    }
+
+    repo_dir = strdup(buffer);
+
     char dir[] = "/tmp/blogc_XXXXXX";
     if (NULL == mkdtemp(dir)) {
         rv = 1;
@@ -353,8 +364,6 @@ git_hook(int argc, char *argv[])
         goto cleanup;
     }
     free(git_archive_cmd);
-
-    char *repo_dir = get_current_dir_name();
 
     if (0 != chdir(dir)) {
         fprintf(stderr, "error: failed to chdir (%s): %s\n", dir,
@@ -427,9 +436,9 @@ git_hook(int argc, char *argv[])
 
 cleanup:
     rmdir_recursive(dir);
+    free(repo_dir);
 cleanup2:
     free(new);
-    free(repo_dir);
     return rv;
 }
 
