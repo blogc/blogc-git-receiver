@@ -175,6 +175,9 @@ git_shell(int argc, char *argv[])
         goto cleanup;
     }
 
+    if (0 == strncmp(argv[2], "git-upload-", 11))
+        goto git_exec;
+
     if (0 != chdir(home)) {
         fprintf(stderr, "error: failed to chdir (%s): %s\n", home,
             strerror(errno));
@@ -232,6 +235,7 @@ git_shell(int argc, char *argv[])
         goto cleanup;
     }
 
+git_exec:
     command_name = strdup(argv[2]);
     for (p = command_name; *p != ' ' & *p != '\0'; p++);
     if (*p == ' ')
