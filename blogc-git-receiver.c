@@ -125,9 +125,10 @@ git_shell(int argc, char *argv[])
     char *command_new = NULL;
 
     // validate git command
-    if (!((0 == strncmp(argv[2], "git-receive-pack ", 17)) ||
-          (0 == strncmp(argv[2], "git-upload-pack ", 16)) ||
-          (0 == strncmp(argv[2], "git-upload-archive ", 19))))
+    size_t len = strlen(argv[2]);
+    if (!((len > 17 && (0 == strncmp(argv[2], "git-receive-pack ", 17))) ||
+          (len > 16 && (0 == strncmp(argv[2], "git-upload-pack ", 16))) ||
+          (len > 19 && (0 == strncmp(argv[2], "git-upload-archive ", 19)))))
     {
         fprintf(stderr, "error: unsupported git command: %s\n", argv[2]);
         rv = 1;
@@ -175,7 +176,7 @@ git_shell(int argc, char *argv[])
         goto cleanup;
     }
 
-    if (0 == strncmp(argv[2], "git-upload-", 11))
+    if (0 == strncmp(argv[2], "git-upload-", 11))  // no need to check len here
         goto git_exec;
 
     if (0 != chdir(home)) {
