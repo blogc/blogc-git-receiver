@@ -60,6 +60,18 @@ b_strdup_printf(const char *format, ...)
 }
 
 
+static unsigned int
+cpu_count(void)
+{
+#ifdef _SC_NPROCESSORS_ONLN
+    long num = sysconf(_SC_NPROCESSORS_ONLN);
+    if (num >= 1)
+        return (unsigned int) num;
+#endif
+    return 1;
+}
+
+
 static void
 rmdir_recursive(const char *dir)
 {
@@ -391,8 +403,10 @@ git_hook(int argc, char *argv[])
 
     unsigned long epoch = time(NULL);
     char *output_dir = b_strdup_printf("%s/builds/%s-%lu", home, master, epoch);
-    char *gmake_cmd = b_strdup_printf(GMAKE_BINARY " OUTPUT_DIR=\"%s\"",
-        output_dir);
+    char *gmake_cmd = b_strdup_printf(GMAKE_BINARY " -j%d OUTPUT_DIR=\"%s\"",
+        cpu_count() + 1, output_dir);
+    fprintf(stdout, "running command: %s\n\n", gmake_cmd);
+    fflush(stdout);
     if (0 != system(gmake_cmd)) {
         fprintf(stderr, "error: failed to build website ...\n");
         rv = 1;
