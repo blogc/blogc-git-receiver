@@ -285,7 +285,8 @@ typedef enum {
 static int
 git_hook(int argc, char *argv[])
 {
-    char c, buffer[BUFFER_SIZE];
+    int c;
+    char buffer[BUFFER_SIZE];
 
     input_state_t state = START_OLD;
     size_t i = 0;
@@ -297,7 +298,7 @@ git_hook(int argc, char *argv[])
 
     while (EOF != (c = getc(stdin))) {
 
-        buffer[i] = c;
+        buffer[i] = (char) c;
 
         switch (state) {
             case START_OLD:
