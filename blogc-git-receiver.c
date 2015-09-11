@@ -228,7 +228,7 @@ git_shell(int argc, char *argv[])
     if (0 == access("pre-receive", F_OK)) {
         if (0 != unlink("pre-receive")) {
             fprintf(stderr, "error: failed to remove old symlink "
-                "(%s/%s/hooks/pre-receive): %s", home, repo, strerror(errno));
+                "(%s/%s/hooks/pre-receive): %s\n", home, repo, strerror(errno));
             rv = 1;
             goto cleanup;
         }
@@ -236,7 +236,7 @@ git_shell(int argc, char *argv[])
 
     if (0 != symlink(self, "pre-receive")) {
         fprintf(stderr, "error: failed to create symlink "
-            "(%s/%s/hooks/pre-receive): %s", home, repo, strerror(errno));
+            "(%s/%s/hooks/pre-receive): %s\n", home, repo, strerror(errno));
         rv = 1;
         goto cleanup;
     }
