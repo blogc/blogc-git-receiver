@@ -18,30 +18,6 @@ AS_IF([test "x$ac_cv_prog_cc_c99" = "xno"], [
 AC_CHECK_HEADERS([libgen.h unistd.h errno.h sys/stat.h sys/types.h dirent.h time.h], [],
   [unable to find some required header])
 
-AC_PATH_PROG([git], [git])
-AS_IF([test "x$ac_cv_path_git" = "x"], [
-  AC_MSG_ERROR([git not found.])])
-AC_DEFINE_UNQUOTED([GIT_BINARY], ["$ac_cv_path_git"],
-  [git binary path])
-
-AC_PATH_PROG([git_shell], [git-shell])
-AS_IF([test "x$ac_cv_path_git_shell" = "x"], [
-  AC_MSG_ERROR([git-shell not found.])])
-AC_DEFINE_UNQUOTED([GIT_SHELL_BINARY], ["$ac_cv_path_git_shell"],
-  [git-shell binary path])
-
-AC_PATH_PROGS([gmake], [gmake make])
-AS_IF([test "x$ac_cv_path_gmake" = "x"], [
-  AC_MSG_ERROR([gmake not found.])])
-AC_DEFINE_UNQUOTED([GMAKE_BINARY], ["$ac_cv_path_gmake"],
-  [gmake binary path])
-
-AC_PATH_PROG([tar], [tar])
-AS_IF([test "x$ac_cv_path_tar" = "x"], [
-  AC_MSG_ERROR([tar not found.])])
-AC_DEFINE_UNQUOTED([TAR_BINARY], ["$ac_cv_path_tar"],
-  [tar binary path])
-
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 

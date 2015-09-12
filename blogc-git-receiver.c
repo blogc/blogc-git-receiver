@@ -200,7 +200,7 @@ git_shell(int argc, char *argv[])
 
     if (0 != access(repo, F_OK)) {
         char *git_init_cmd = b_strdup_printf(
-            GIT_BINARY " init --bare \"%s\" > /dev/null", repo);
+            "git init --bare \"%s\" > /dev/null", repo);
         if (0 != system(git_init_cmd)) {
             fprintf(stderr, "error: failed to create git repository: %s\n",
                 repo);
@@ -255,13 +255,7 @@ git_exec:
         *p = '\0';
     command_new = b_strdup_printf("%s '%s'", command_name, repo);
 
-    char *args[4];
-    args[0] = GIT_SHELL_BINARY;
-    args[1] = "-c";
-    args[2] = command_new;
-    args[3] = NULL;
-
-    execv(GIT_SHELL_BINARY, args);
+    execlp("git-shell", "git-shell", "-c", command_new, NULL);
 
 cleanup:
     free(repo);
@@ -372,8 +366,8 @@ git_hook(int argc, char *argv[])
         goto cleanup;
     }
 
-    char *git_archive_cmd = b_strdup_printf(GIT_BINARY " archive \"%s\" | "
-        TAR_BINARY " -x -C \"%s\"", master, dir);
+    char *git_archive_cmd = b_strdup_printf(
+        "git archive \"%s\" | tar -x -C \"%s\"", master, dir);
     if (0 != system(git_archive_cmd)) {
         fprintf(stderr, "error: failed to extract git content to temporary "
             "directory: %s\n", dir);
@@ -404,7 +398,7 @@ git_hook(int argc, char *argv[])
 
     unsigned long epoch = time(NULL);
     char *output_dir = b_strdup_printf("%s/builds/%s-%lu", home, master, epoch);
-    char *gmake_cmd = b_strdup_printf(GMAKE_BINARY " -j%d OUTPUT_DIR=\"%s\"",
+    char *gmake_cmd = b_strdup_printf("gmake -j%d OUTPUT_DIR=\"%s\"",
         cpu_count() + 1, output_dir);
     fprintf(stdout, "running command: %s\n\n", gmake_cmd);
     fflush(stdout);
