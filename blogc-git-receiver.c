@@ -250,7 +250,7 @@ git_shell(int argc, char *argv[])
 
 git_exec:
     command_name = strdup(argv[2]);
-    for (p = command_name; *p != ' ' & *p != '\0'; p++);
+    for (p = command_name; *p != ' ' && *p != '\0'; p++);
     if (*p == ' ')
         *p = '\0';
     command_new = b_strdup_printf("%s '%s'", command_name, repo);
