@@ -1,6 +1,6 @@
 AC_PREREQ([2.69])
 
-AC_INIT([blogc-git-receiver], [0.1-beta.5], [https://github.com/blogc/blogc-git-receiver])
+AC_INIT([blogc-git-receiver], [0.1], [https://github.com/blogc/blogc-git-receiver])
 AC_CONFIG_AUX_DIR([build-aux])
 
 AM_INIT_AUTOMAKE([1.13 foreign dist-bzip2 dist-xz subdir-objects serial-tests])
