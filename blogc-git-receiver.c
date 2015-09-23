@@ -367,7 +367,7 @@ git_hook(int argc, char *argv[])
     }
 
     char *git_archive_cmd = b_strdup_printf(
-        "git archive \"%s\" | tar -x -C \"%s\"", master, dir);
+        "git archive \"%s\" | tar -x -C \"%s\" -f -", master, dir);
     if (0 != system(git_archive_cmd)) {
         fprintf(stderr, "error: failed to extract git content to temporary "
             "directory: %s\n", dir);
