@@ -218,6 +218,17 @@ git_shell(int argc, char *argv[])
         goto cleanup;
     }
 
+    if (0 != access("hooks", F_OK)) {
+        // openwrt git package won't install git templates, then the git
+        // repositories created with it won't have the hooks/ directory.
+        if (0 != mkdir("hooks", 0777)) {  // mkdir honors umask for us.
+            fprintf(stderr, "error: failed to create directory (%s/%s/hooks): "
+                "%s\n", home, repo, strerror(errno));
+            rv = 1;
+            goto cleanup;
+        }
+    }
+
     if (0 != chdir("hooks")) {
         fprintf(stderr, "error: failed to chdir (%s/%s/hooks): %s\n", home,
             repo, strerror(errno));
