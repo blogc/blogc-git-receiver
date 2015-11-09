@@ -44,6 +44,8 @@ Some reasonable ways to allow the `blogc` user to push to the remote repository 
 - Create a password-less SSH key. The key *must* be password-less, because the push is automatic, and remote git hooks can't be interactive.
 - Create an oauth token in the hosting service (e.g. GitHub or Bitbucket) and add it to the git URL in `.mirror`.
 
+The mirroring feature wont't block a `git push`, it will just raise warnings. That means that if an error happens when mirroring the repository, your deploy will still succeed. Please pay attention to the git hook logs, to avoid losing data because your repositories are not being mirrored. ;)
+
 ----
 If some unexpected error happened, please [file an issue](https://github.com/blogc/blogc-git-receiver/issues/new).
 
