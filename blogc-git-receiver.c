@@ -300,6 +300,7 @@ git_hook(int argc, char *argv[])
     int rv = 0;
     char *new = NULL;
     char *master = NULL;
+    char *mirror = NULL;
 
     while (EOF != (c = getc(stdin))) {
 
@@ -423,6 +424,29 @@ git_hook(int argc, char *argv[])
     }
     free(gmake_cmd);
 
+    if (0 == access(".mirror", F_OK)) {
+        FILE *fp = fopen(".mirror", "r");
+        if (fp != NULL) {
+            i = 0;
+            while (EOF != (c = getc(fp))) {
+                buffer[i] = (char) c;
+                if (buffer[i] == '\n' || buffer[i] == '\r') {
+                    break;
+                }
+                if (++i >= BUFFER_SIZE) {
+                    fprintf(stderr,
+                        "warning: git mirror url is too big, ignoring.\n");
+                    i = 0;
+                    break;
+                }
+            }
+            if (i > 0) {
+                mirror = strndup(buffer, i);
+            }
+            fclose(fp);
+        }
+    }
+
     if (0 != chdir(repo_dir)) {
         fprintf(stderr, "error: failed to chdir (%s): %s\n", repo_dir,
             strerror(errno));
@@ -459,9 +483,19 @@ git_hook(int argc, char *argv[])
     if (htdocs_sym != NULL)
         rmdir_recursive(htdocs_sym);
 
+    if (mirror != NULL) {
+        char *git_push_cmd = b_strdup_printf(
+            "git push --mirror --force \"%s\"", mirror);
+        if (0 != system(git_push_cmd)) {
+            fprintf(stderr, "warning: failed push to git mirror: %s\n", mirror);
+        }
+        free(git_push_cmd);
+    }
+
 cleanup:
     rmdir_recursive(dir);
     free(repo_dir);
+    free(mirror);
 cleanup2:
     free(new);
     return rv;
