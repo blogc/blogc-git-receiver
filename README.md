@@ -57,6 +57,10 @@ As the `git push --mirror` call is automated, you must disable SSH strict host c
 
 Please replace `bitbucket.org` with the Git base URL of your hosting provider.
 
+To change this file, you must login with `/bin/bash` or any other "real" shell, as `root`:
+
+    # su -s /bin/bash - blogc
+
 ----
 If some unexpected error happened, please [file an issue](https://github.com/blogc/blogc-git-receiver/issues/new).
 
