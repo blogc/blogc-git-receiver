@@ -35,6 +35,17 @@ To deploy a website (e.g. our example repository):
 
 This will deploy the example to the remote server, creating a symlink to your built content in `/home/blogc/repos/blogs/blogc-example.git/htdocs`, you just need to point the web server to this symlink, configure your rewrite rules, if needed, and you're done.
 
+### Additional configuration steps when running Fedora with SELinux
+
+Supposing that you use nginx as your webserver, running with the `nginx` user:
+
+    # dnf install -y policycoreutils-python-utils
+    # gpasswd -a nginx blogc
+    # chmod -R g+rx /home/blogc
+    # semanage fcontext -a -t httpd_sys_content_t "/home/blogc(/.*)?"
+    # restorecon -R -v /home/blogc
+    # systemctl restart nginx
+
 ## Repository mirroring
 
 Users can rely on `blogc-git-receiver` to mirror their repositories to a remote Git repository (e.g. a free Bitbucket private repository). This feature just requires a `.mirror` file in the root of the repository, with the git URL of the remote repository. Please note that the `blogc` user must be able to push to the remote repository, and that any content manually pushed to the remote repository is overwritten by `blogc-git-receiver`, because it will `git push --mirror` to the remote repository.
