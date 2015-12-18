@@ -35,17 +35,21 @@ To deploy a website (e.g. our example repository):
 
 This will deploy the example to the remote server, creating a symlink to your built content in `/home/blogc/repos/blogs/blogc-example.git/htdocs`, you just need to point the web server to this symlink, configure your rewrite rules, if needed, and you're done.
 
-### Additional configuration steps when running Fedora with SELinux
+### How to install on Fedora 22/23, with packages from Copr and SELinux enabled
 
-Supposing that you'll use nginx as your webserver, running with the `nginx` user, and that the `blogc` user was already created in the previous setup:
+Supposing that you'll use nginx as your webserver, running with the `nginx` user:
 
-    # dnf install -y nginx policycoreutils-python-utils
+    # dnf copr enable -y rafaelmartins/blogc
+    # dnf install -y blogc blogc-git-receiver nginx policycoreutils-python-utils
+    # useradd -m -s /usr/bin/blogc-git-receiver blogc
     # gpasswd -a nginx blogc
     # chmod -R g+rx /home/blogc
-    # su -c "mkdir /home/blogc/builds" -s /bin/sh blogc
-    # semanage fcontext -a -t httpd_sys_content_t "/home/blogc/builds(/.*)?"
-    # restorecon -R -v /home/blogc/builds
+    # su -c "mkdir /home/blogc/{builds,repos}" -s /bin/sh blogc
+    # semanage fcontext -a -t httpd_sys_content_t "/home/blogc/(builds|repos)(/.*)?"
+    # restorecon -R -v /home/blogc
     # systemctl restart nginx
+
+Now feel free to install an editor, fix nginx settings and start pushing your blogs!
 
 ## Repository mirroring
 
