@@ -37,13 +37,14 @@ This will deploy the example to the remote server, creating a symlink to your bu
 
 ### Additional configuration steps when running Fedora with SELinux
 
-Supposing that you use nginx as your webserver, running with the `nginx` user:
+Supposing that you'll use nginx as your webserver, running with the `nginx` user, and that the `blogc` user was already created in the previous setup:
 
-    # dnf install -y policycoreutils-python-utils
+    # dnf install -y nginx policycoreutils-python-utils
     # gpasswd -a nginx blogc
     # chmod -R g+rx /home/blogc
-    # semanage fcontext -a -t httpd_sys_content_t "/home/blogc(/.*)?"
-    # restorecon -R -v /home/blogc
+    # su -c "mkdir /home/blogc/builds" -s /bin/sh blogc
+    # semanage fcontext -a -t httpd_sys_content_t "/home/blogc/builds(/.*)?"
+    # restorecon -R -v /home/blogc/builds
     # systemctl restart nginx
 
 ## Repository mirroring
