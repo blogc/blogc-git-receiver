@@ -311,7 +311,8 @@ git_pre_receive_hook(const char *master, const char *repo_dir)
 
     unsigned long epoch = time(NULL);
     char *output_dir = b_strdup_printf("%s/builds/%s-%lu", home, master, epoch);
-    char *gmake_cmd = b_strdup_printf("gmake -j%d OUTPUT_DIR=\"%s\"",
+    char *gmake_cmd = b_strdup_printf(
+        "gmake -j%d OUTPUT_DIR=\"%s\" BLOGC_GIT_RECEIVER=1",
         cpu_count() + 1, output_dir);
     fprintf(stdout, "running command: %s\n\n", gmake_cmd);
     fflush(stdout);

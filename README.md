@@ -77,6 +77,10 @@ To change this file, you must login with `/bin/bash` or any other "real" shell, 
 
     # su -s /bin/bash - blogc
 
+## Running specific code when deploying with `blogc-git-receiver`
+
+This tool will export an environment variable called `BLOGC_GIT_RECEIVER` when calling `gmake` to build your site. You can use it to enable building of content that should only be built when running in production environment.
+
 ----
 If some unexpected error happened, please [file an issue](https://github.com/blogc/blogc-git-receiver/issues/new).
 
