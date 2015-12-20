@@ -62,9 +62,9 @@ Some reasonable ways to allow the `blogc` user to push to the remote repository 
 
 The mirroring feature wont't block a `git push`, it will just raise warnings. That means that if an error happens when mirroring the repository, your deploy will still succeed. Please pay attention to the git hook logs, to avoid losing data because your repositories are not being mirrored. ;)
 
-### Caveats of mirroring with SSH.
+### Caveats of repository mirroring with SSH
 
-As said before, to use SSH to mirror the repository, the authentication must be done with a password-less SSH key, created by the `blogc` user.
+As said before, the authentication must be done with a password-less SSH key created by the `blogc` user when mirroring the repository with SSH.
 
 As the `git push --mirror` call is automated, you must disable SSH strict host checking in SSH `~/.ssh/config` file:
 
