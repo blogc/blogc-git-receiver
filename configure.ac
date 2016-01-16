@@ -18,7 +18,10 @@ AS_IF([test "x$ac_cv_prog_cc_c99" = "xno"], [
 AC_CHECK_HEADERS([libgen.h unistd.h errno.h sys/stat.h sys/types.h dirent.h time.h], [],
   [unable to find some required header])
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([
+    Makefile
+    blogc-git-receiver.spec
+])
 AC_OUTPUT
 
 AS_ECHO("

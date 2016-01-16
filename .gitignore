@@ -38,3 +38,7 @@ Makefile.in
 
 # tarballs
 blogc-git-receiver-*.tar.*
+
+# rpms
+blogc-git-receiver.spec
+blogc-git-receiver-*.rpm
