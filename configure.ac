@@ -15,8 +15,9 @@ AS_IF([test "x$ac_cv_prog_cc_c99" = "xno"], [
   AC_MSG_ERROR([no C99 compiler found, blogc-git-receiver requires a C99 compiler.])
 ])
 
-AC_CHECK_HEADERS([libgen.h unistd.h errno.h sys/stat.h sys/types.h dirent.h time.h], [],
-  [unable to find some required header])
+AC_CHECK_HEADERS([libgen.h unistd.h errno.h sys/stat.h sys/types.h dirent.h time.h], , [
+  AC_MSG_ERROR([unable to find some required header])
+])
 
 AC_CONFIG_FILES([
     Makefile
