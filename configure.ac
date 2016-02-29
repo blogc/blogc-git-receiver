@@ -1,7 +1,8 @@
 AC_PREREQ([2.69])
 
-AC_INIT([blogc-git-receiver], [0.3], [https://github.com/blogc/blogc-git-receiver],
-        [blogc-git-receiver], [https://blogc.rgm.io/])
+AC_INIT([blogc-git-receiver], m4_esyscmd([build-aux/git-version-gen .tarball-version]),
+        [https://github.com/blogc/blogc-git-receiver], [blogc-git-receiver],
+        [https://blogc.rgm.io/])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 

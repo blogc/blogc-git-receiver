@@ -10,7 +10,17 @@ AM_DISTCHECK_CONFIGURE_FLAGS = \
 
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = autogen.sh LICENSE README.md
+EXTRA_DIST = \
+	build-aux/git-version-gen \
+	$(top_srcdir)/.version \
+	autogen.sh \
+	LICENSE \
+	README.md \
+	$(NULL)
+
+BUILT_SOURCES = \
+	$(top_srcdir)/.version \
+	$(NULL)
 
 bin_PROGRAMS = blogc-git-receiver
 
@@ -24,3 +34,9 @@ blogc_git_receiver_CFLAGS = \
 blogc_git_receiver_LDADD = \
 	$(SQUAREBALL_LIBS) \
 	$(NULL)
+
+$(top_srcdir)/.version:
+	echo $(VERSION) > $@-t && mv $@-t $@
+
+dist-hook:
+	echo $(VERSION) > $(distdir)/.tarball-version

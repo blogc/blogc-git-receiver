@@ -32,6 +32,7 @@ Makefile.in
 /stamp-h1
 .dirstamp
 /build-aux/*
+!/build-aux/git-version-gen
 
 # installed .m4 files
 /m4/*.m4
@@ -46,3 +47,6 @@ blogc-git-receiver-*.tar.*
 # rpms
 blogc-git-receiver.spec
 blogc-git-receiver-*.rpm
+
+# git-version-gen
+/.version
