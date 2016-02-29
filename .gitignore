@@ -33,6 +33,10 @@ Makefile.in
 .dirstamp
 /build-aux/*
 
+# installed .m4 files
+/m4/*.m4
+!/m4/pkg.m4
+
 # binary
 /blogc-git-receiver
 

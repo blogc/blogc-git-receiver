@@ -23,43 +23,13 @@
 #include <dirent.h>
 #include <time.h>
 
+#include <squareball.h>
+
 #ifndef BUFFER_SIZE
 #define BUFFER_SIZE 4096
 #endif
 
 typedef int (*git_hook_callback_t)(const char *master, const char *repo_dir);
-
-
-static char*
-b_strdup_vprintf(const char *format, va_list ap)
-{
-    va_list ap2;
-    va_copy(ap2, ap);
-    int l = vsnprintf(NULL, 0, format, ap2);
-    va_end(ap2);
-    if (l < 0)
-        return NULL;
-    char *tmp = malloc(l + 1);
-    if (!tmp)
-        return NULL;
-    int l2 = vsnprintf(tmp, l + 1, format, ap);
-    if (l2 < 0) {
-        free(tmp);
-        return NULL;
-    }
-    return tmp;
-}
-
-
-static char*
-b_strdup_printf(const char *format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    char *tmp = b_strdup_vprintf(format, ap);
-    va_end(ap);
-    return tmp;
-}
 
 
 static unsigned int
@@ -97,7 +67,7 @@ rmdir_recursive(const char *dir)
     while (NULL != (e = readdir(d))) {
         if ((0 == strcmp(e->d_name, ".")) || (0 == strcmp(e->d_name, "..")))
             continue;
-        char *f = b_strdup_printf("%s/%s", dir, e->d_name);
+        char *f = sb_strdup_printf("%s/%s", dir, e->d_name);
         if (0 != stat(f, &buf)) {
             fprintf(stderr, "error: failed to stat directory entry (%s): %s\n",
                 e->d_name, strerror(errno));
@@ -181,7 +151,7 @@ git_shell(int argc, char *argv[])
     if (*--p == '/')
         *p = '\0';
 
-    repo = b_strdup_printf("repos/%s", r);
+    repo = sb_strdup_printf("repos/%s", r);
 
     // check if repository is sane
     if (0 == strlen(repo)) {
@@ -201,7 +171,7 @@ git_shell(int argc, char *argv[])
     }
 
     if (0 != access(repo, F_OK)) {
-        char *git_init_cmd = b_strdup_printf(
+        char *git_init_cmd = sb_strdup_printf(
             "git init --bare \"%s\" > /dev/null", repo);
         if (0 != system(git_init_cmd)) {
             fprintf(stderr, "error: failed to create git repository: %s\n",
@@ -282,7 +252,7 @@ git_exec:
     for (p = command_name; *p != ' ' && *p != '\0'; p++);
     if (*p == ' ')
         *p = '\0';
-    command_new = b_strdup_printf("%s '%s'", command_name, repo);
+    command_new = sb_strdup_printf("%s '%s'", command_name, repo);
 
     execlp("git-shell", "git-shell", "-c", command_new, NULL);
 
@@ -310,8 +280,8 @@ git_pre_receive_hook(const char *master, const char *repo_dir)
     }
 
     unsigned long epoch = time(NULL);
-    char *output_dir = b_strdup_printf("%s/builds/%s-%lu", home, master, epoch);
-    char *gmake_cmd = b_strdup_printf(
+    char *output_dir = sb_strdup_printf("%s/builds/%s-%lu", home, master, epoch);
+    char *gmake_cmd = sb_strdup_printf(
         "gmake -j%d OUTPUT_DIR=\"%s\" BLOGC_GIT_RECEIVER=1",
         cpu_count() + 1, output_dir);
     fprintf(stdout, "running command: %s\n\n", gmake_cmd);
@@ -405,7 +375,7 @@ git_post_receive_hook(const char *master, const char *repo_dir)
         return 0;
     }
 
-    char *git_push_cmd = b_strdup_printf("git push --mirror \"%s\"", mirror);
+    char *git_push_cmd = sb_strdup_printf("git push --mirror \"%s\"", mirror);
     if (0 != system(git_push_cmd))
         fprintf(stderr, "warning: failed push to git mirror: %s\n", mirror);
     free(git_push_cmd);
@@ -515,7 +485,7 @@ git_hook(int argc, char *argv[], git_hook_callback_t callback)
         goto cleanup;
     }
 
-    char *git_archive_cmd = b_strdup_printf(
+    char *git_archive_cmd = sb_strdup_printf(
         "git archive \"%s\" | tar -x -C \"%s\" -f -", master, dir);
     if (0 != system(git_archive_cmd)) {
         fprintf(stderr, "error: failed to extract git content to temporary "
