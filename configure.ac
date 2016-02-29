@@ -1,6 +1,7 @@
 AC_PREREQ([2.69])
 
-AC_INIT([blogc-git-receiver], [0.3], [https://github.com/blogc/blogc-git-receiver])
+AC_INIT([blogc-git-receiver], [0.3], [https://github.com/blogc/blogc-git-receiver],
+        [blogc-git-receiver], [https://blogc.rgm.io/])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -46,8 +47,8 @@ AS_IF([test "x$with_squareball" = "xsystem"], [
 AM_CONDITIONAL(INTERNAL_SQUAREBALL, [test "x$with_squareball" != "xsystem"])
 
 AC_CONFIG_FILES([
-    Makefile
-    blogc-git-receiver.spec
+  Makefile
+  blogc-git-receiver.spec
 ])
 AC_OUTPUT
 

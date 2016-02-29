@@ -1,24 +1,24 @@
-Name:		@PACKAGE_NAME@
-Version:	@PACKAGE_VERSION@
-Release:	1%{?dist}
-License:	BSD
-Group:		System Environment/Shells
-Summary:	A simple login shell/git hook to deploy blogc websites
-URL:		https://blogc.rgm.io/
-Source0:	https://github.com/blogc/blogc-git-receiver/releases/download/v%{version}/blogc-git-receiver-%{version}.tar.xz
+Name: @PACKAGE_NAME@
+Version: @PACKAGE_VERSION@
+Release: 1%{?dist}
+License: BSD
+Group: System Environment/Shells
+Summary: A simple login shell/git hook to deploy blogc websites
+URL: @PACKAGE_URL@
+Source0: https://github.com/blogc/blogc-git-receiver/releases/download/v%{version}/blogc-git-receiver-%{version}.tar.xz
 
-#BuildRequires:
-Requires:	git, tar, make
+BuildRequires: squareball-devel
+Requires: git, tar, make
 
 %description
 blogc-git-receiver is a simple login shell/git hook to deploy blogc websites
 
 %prep
-%setup -q -n blogc-git-receiver-%{version}
+%setup -q
 
 
 %build
-%configure
+%configure --with-squareball=system
 make %{?_smp_mflags}
 
 
