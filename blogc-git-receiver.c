@@ -136,7 +136,7 @@ git_shell(int argc, char *argv[])
     }
 
     // get git repository
-    command_orig = strdup(argv[2]);
+    command_orig = sb_strdup(argv[2]);
     char *p, *r;
     for (p = command_orig; *p != ' ' && *p != '\0'; p++);
     if (*p == ' ')
@@ -248,7 +248,7 @@ git_shell(int argc, char *argv[])
     }
 
 git_exec:
-    command_name = strdup(argv[2]);
+    command_name = sb_strdup(argv[2]);
     for (p = command_name; *p != ' ' && *p != '\0'; p++);
     if (*p == ' ')
         *p = '\0';
@@ -477,7 +477,7 @@ git_hook(int argc, char *argv[], git_hook_callback_t callback)
         goto cleanup;
     }
 
-    repo_dir = strdup(buffer);
+    repo_dir = sb_strdup(buffer);
 
     char dir[] = "/tmp/blogc_XXXXXX";
     if (NULL == mkdtemp(dir)) {
