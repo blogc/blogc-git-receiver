@@ -1,5 +1,7 @@
 # blogc-git-receiver
 
+[![Build Status](https://travis-ci.org/blogc/blogc-git-receiver.svg?branch=master)](https://travis-ci.org/blogc/blogc-git-receiver)
+
 A simple login shell/git hook to deploy blogc websites.
 
 `blogc-git-receiver` provides a PaaS-like way to deploy your blogc websites. When used as a login shell, it will accept git payloads, creating bare repositories as needed, and installing a hook, that will take care of building your website each time you push something to the `master` branch.
