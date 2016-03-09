@@ -35,6 +35,14 @@ blogc_git_receiver_LDADD = \
 	$(SQUAREBALL_LIBS) \
 	$(NULL)
 
+if USE_RPMBUILD
+dist-srpm: blogc-git-receiver.spec dist-xz
+	$(RPMBUILD) \
+		--define "_srcrpmdir $(top_builddir)" \
+		--define "_sourcedir $(top_builddir)" \
+		-bs blogc-git-receiver.spec
+endif
+
 $(top_srcdir)/.version:
 	echo $(VERSION) > $@-t && mv $@-t $@
 

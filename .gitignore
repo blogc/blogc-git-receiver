@@ -33,6 +33,8 @@ Makefile.in
 .dirstamp
 /build-aux/*
 !/build-aux/git-version-gen
+!/build-aux/travis-build.sh
+!/build-aux/travis-deploy.sh
 
 # installed .m4 files
 /m4/*.m4
