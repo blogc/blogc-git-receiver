@@ -22,13 +22,6 @@ matrix:
 
 before_script: ./autogen.sh
 
-script: ./build-aux/travis-build.sh
-
-deploy:
-  provider: script
-  script: ./build-aux/travis-deploy.sh
-  skip_cleanup: true
-  on:
-    repo: blogc/blogc-git-receiver
-    branch: master
-    condition: $CC = gcc
+script:
+  - ./build-aux/travis-build.sh
+  - ./build-aux/travis-deploy.sh
