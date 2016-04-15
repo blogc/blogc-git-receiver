@@ -29,8 +29,6 @@
 #define BUFFER_SIZE 4096
 #endif
 
-typedef int (*git_hook_callback_t)(const char *master, const char *repo_dir);
-
 
 static unsigned int
 cpu_count(void)
@@ -266,120 +264,15 @@ cleanup:
 
 
 int
-git_pre_receive_hook(const char *master, const char *repo_dir)
+git_post_receive_hook(int argc, char *argv[])
 {
-    if ((0 != access("Makefile", F_OK)) && (0 != access("GNUMakefile", F_OK))) {
-        fprintf(stderr, "warning: no makefile found. skipping ...\n");
-        return 0;
-    }
-
-    char *home = getenv("HOME");
-    if (home == NULL) {
-        fprintf(stderr, "error: failed to find user home path\n");
-        return 1;
-    }
-
-    unsigned long epoch = time(NULL);
-    char *output_dir = sb_strdup_printf("%s/builds/%s-%lu", home, master, epoch);
-    char *gmake_cmd = sb_strdup_printf(
-        "gmake -j%d OUTPUT_DIR=\"%s\" BLOGC_GIT_RECEIVER=1",
-        cpu_count() + 1, output_dir);
-    fprintf(stdout, "running command: %s\n\n", gmake_cmd);
-    fflush(stdout);
-    if (0 != system(gmake_cmd)) {
-        fprintf(stderr, "error: failed to build website ...\n");
-        rmdir_recursive(output_dir);
-        free(output_dir);
-        free(gmake_cmd);
-        return 1;
-    }
-    free(gmake_cmd);
-
-    if (0 != chdir(repo_dir)) {
-        fprintf(stderr, "error: failed to chdir (%s): %s\n", repo_dir,
-            strerror(errno));
-        rmdir_recursive(output_dir);
-        free(output_dir);
-        return 1;
-    }
-
-    char buffer[BUFFER_SIZE];
-    char *htdocs_sym = NULL;
-    ssize_t htdocs_sym_len = readlink("htdocs", buffer, BUFFER_SIZE);
-    if (0 < htdocs_sym_len) {
-        if (0 != unlink("htdocs")) {
-            fprintf(stderr, "error: failed to remove symlink (%s/htdocs): %s\n",
-                repo_dir, strerror(errno));
-            rmdir_recursive(output_dir);
-            free(output_dir);
-            return 1;
-        }
-        buffer[htdocs_sym_len] = '\0';
-        htdocs_sym = buffer;
-    }
-
-    if (0 != symlink(output_dir, "htdocs")) {
-        fprintf(stderr, "error: failed to create symlink (%s/htdocs): %s\n",
-            repo_dir, strerror(errno));
-        rmdir_recursive(output_dir);
-        free(output_dir);
-        return 1;
-    }
-
-    if (htdocs_sym != NULL)
-        rmdir_recursive(htdocs_sym);
-
-    free(output_dir);
-
-    return 0;
-}
-
-
-int
-git_post_receive_hook(const char *master, const char *repo_dir)
-{
-    char buffer[BUFFER_SIZE];
-    char *mirror = NULL;
-
-    if (0 == access(".mirror", F_OK)) {
-        FILE *fp = fopen(".mirror", "r");
-        if (fp != NULL) {
-            size_t i = 0;
-            int c;
-            while (EOF != (c = getc(fp))) {
-                buffer[i] = (char) c;
-                if (buffer[i] == '\n' || buffer[i] == '\r') {
-                    break;
-                }
-                if (++i >= BUFFER_SIZE) {
-                    fprintf(stderr,
-                        "warning: git mirror url is too big, ignoring.\n");
-                    i = 0;
-                    break;
-                }
-            }
-            if (i > 0) {
-                mirror = strndup(buffer, i);
-            }
-            fclose(fp);
-        }
-    }
-
-    if (mirror == NULL)
+    if (0 != system("git remote get-url --push mirror > /dev/null"))
         return 0;
 
-    if (0 != chdir(repo_dir)) {
-        fprintf(stderr, "warning: failed to chdir (%s): %s\n", repo_dir,
-            strerror(errno));
-        free(mirror);
-        return 0;
-    }
-
-    char *git_push_cmd = sb_strdup_printf("git push --mirror \"%s\"", mirror);
-    if (0 != system(git_push_cmd))
-        fprintf(stderr, "warning: failed push to git mirror: %s\n", mirror);
-    free(git_push_cmd);
-    free(mirror);
+    // at this point we know that we have a remote called mirror, we can just
+    // push to it.
+    if (0 != system("git push --mirror mirror"))
+        fprintf(stderr, "warning: failed push to git mirror\n");
 
     return 0;
 }
@@ -396,7 +289,7 @@ typedef enum {
 
 
 static int
-git_hook(int argc, char *argv[], git_hook_callback_t callback)
+git_pre_receive_hook(int argc, char *argv[])
 {
     int c;
     char buffer[BUFFER_SIZE];
@@ -469,6 +362,7 @@ git_hook(int argc, char *argv[], git_hook_callback_t callback)
     }
 
     char *repo_dir = NULL;
+    char *output_dir = NULL;
 
     if (NULL == getcwd(buffer, BUFFER_SIZE)) {
         fprintf(stderr, "error: failed to get repository remote path: %s\n",
@@ -503,9 +397,69 @@ git_hook(int argc, char *argv[], git_hook_callback_t callback)
         goto cleanup;
     }
 
-    rv = callback(master, repo_dir);
+    if ((0 != access("Makefile", F_OK)) && (0 != access("GNUMakefile", F_OK))) {
+        fprintf(stderr, "warning: no makefile found. skipping ...\n");
+        goto cleanup;
+    }
+
+    char *home = getenv("HOME");
+    if (home == NULL) {
+        fprintf(stderr, "error: failed to find user home path\n");
+        rv = 1;
+        goto cleanup;
+    }
+
+    unsigned long epoch = time(NULL);
+    output_dir = sb_strdup_printf("%s/builds/%s-%lu", home, master, epoch);
+    char *gmake_cmd = sb_strdup_printf(
+        "gmake -j%d OUTPUT_DIR=\"%s\" BLOGC_GIT_RECEIVER=1",
+        cpu_count() + 1, output_dir);
+    fprintf(stdout, "running command: %s\n\n", gmake_cmd);
+    fflush(stdout);
+    if (0 != system(gmake_cmd)) {
+        fprintf(stderr, "error: failed to build website ...\n");
+        rmdir_recursive(output_dir);
+        free(gmake_cmd);
+        rv = 1;
+        goto cleanup;
+    }
+    free(gmake_cmd);
+
+    if (0 != chdir(repo_dir)) {
+        fprintf(stderr, "error: failed to chdir (%s): %s\n", repo_dir,
+            strerror(errno));
+        rmdir_recursive(output_dir);
+        rv = 1;
+        goto cleanup;
+    }
+
+    char *htdocs_sym = NULL;
+    ssize_t htdocs_sym_len = readlink("htdocs", buffer, BUFFER_SIZE);
+    if (0 < htdocs_sym_len) {
+        if (0 != unlink("htdocs")) {
+            fprintf(stderr, "error: failed to remove symlink (%s/htdocs): %s\n",
+                repo_dir, strerror(errno));
+            rmdir_recursive(output_dir);
+            rv = 1;
+            goto cleanup;
+        }
+        buffer[htdocs_sym_len] = '\0';
+        htdocs_sym = buffer;
+    }
+
+    if (0 != symlink(output_dir, "htdocs")) {
+        fprintf(stderr, "error: failed to create symlink (%s/htdocs): %s\n",
+            repo_dir, strerror(errno));
+        rmdir_recursive(output_dir);
+        rv = 1;
+        goto cleanup;
+    }
+
+    if (htdocs_sym != NULL)
+        rmdir_recursive(htdocs_sym);
 
 cleanup:
+    free(output_dir);
     rmdir_recursive(dir);
     free(repo_dir);
 cleanup2:
@@ -519,9 +473,9 @@ main(int argc, char *argv[])
 {
     if (argc > 0) {
         if (0 == strcmp(basename(argv[0]), "pre-receive"))
-            return git_hook(argc, argv, git_pre_receive_hook);
+            return git_pre_receive_hook(argc, argv);
         if (0 == strcmp(basename(argv[0]), "post-receive"))
-            return git_hook(argc, argv, git_post_receive_hook);
+            return git_post_receive_hook(argc, argv);
     }
 
     if (argc == 3 && (0 == strcmp(argv[1], "-c")))

@@ -55,14 +55,19 @@ Now feel free to install an editor, fix nginx settings and start pushing your bl
 
 ## Repository mirroring
 
-Users can rely on `blogc-git-receiver` to mirror their repositories to a remote Git repository (e.g. a free Bitbucket private repository). This feature just requires a `.mirror` file in the root of the repository, with the git URL of the remote repository. Please note that the `blogc` user must be able to push to the remote repository, and that any content manually pushed to the remote repository is overwritten by `blogc-git-receiver`, because it will `git push --mirror` to the remote repository.
+Users can rely on `blogc-git-receiver` to mirror their repositories to a remote Git repository (e.g. a free Bitbucket private repository). This feature just requires adding a remote called `mirror` to the bare repository in your server. If such remote exists, `blogc-git-receiver` with `git push --mirror` to it. Please note that the `blogc` user must be able to push to the remote repository, and that any content manually pushed to the remote repository is overwritten by `blogc-git-receiver`.
 
 Some reasonable ways to allow the `blogc` user to push to the remote repository are:
 
 - Create a password-less SSH key. The key *must* be password-less, because the push is automatic, and remote git hooks can't be interactive.
-- Create an oauth token in the hosting service (if it supports oauth authentication in git, e.g. GitHub) and add it to the git URL in `.mirror`.
+- Create an oauth token in the hosting service (if it supports oauth authentication in git, e.g. GitHub) and add it to the git URL.
 
 The mirroring feature wont't block a `git push`, it will just raise warnings. That means that if an error happens when mirroring the repository, your deploy will still succeed. Please pay attention to the git hook logs, to avoid losing data because your repositories are not being mirrored. ;)
+
+To add the remote, run the following commits inside the bare repository:
+
+    # su -s /bin/bash - blogc
+    $ git remote add mirror $YOUR_GIT_MIRROR_URL
 
 ### Caveats of repository mirroring with SSH
 
