@@ -266,7 +266,7 @@ cleanup:
 int
 git_post_receive_hook(int argc, char *argv[])
 {
-    if (0 != system("git remote get-url --push mirror > /dev/null"))
+    if (0 != system("git remote get-url --push mirror &> /dev/null"))
         return 0;
 
     // at this point we know that we have a remote called mirror, we can just
