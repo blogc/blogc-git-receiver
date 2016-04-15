@@ -64,7 +64,7 @@ Some reasonable ways to allow the `blogc` user to push to the remote repository 
 
 The mirroring feature wont't block a `git push`, it will just raise warnings. That means that if an error happens when mirroring the repository, your deploy will still succeed. Please pay attention to the git hook logs, to avoid losing data because your repositories are not being mirrored. ;)
 
-To add the remote, run the following commits inside the bare repository:
+To add the remote, run the following commands inside the blog bare repository in the server:
 
     # su -s /bin/bash - blogc
     $ git remote add --mirror=push mirror $YOUR_GIT_MIRROR_URL
