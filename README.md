@@ -55,7 +55,7 @@ Now feel free to install an editor, fix nginx settings and start pushing your bl
 
 ## Repository mirroring
 
-Users can rely on `blogc-git-receiver` to mirror their repositories to a remote Git repository (e.g. a free Bitbucket private repository). This feature just requires adding a remote called `mirror` to the bare repository in your server. If such remote exists, `blogc-git-receiver` with `git push --mirror` to it. Please note that the `blogc` user must be able to push to the remote repository, and that any content manually pushed to the remote repository is overwritten by `blogc-git-receiver`.
+Users can rely on `blogc-git-receiver` to mirror their repositories to a remote Git repository (e.g. a free Bitbucket private repository). This feature just requires adding a remote called `mirror` to the bare repository in your server. If such remote exists, `blogc-git-receiver` will `git push --mirror` to it. Please note that the `blogc` user must be able to push to the remote repository, and that any content manually pushed to the remote repository is overwritten by `blogc-git-receiver`.
 
 Some reasonable ways to allow the `blogc` user to push to the remote repository are:
 
