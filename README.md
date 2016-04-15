@@ -67,7 +67,7 @@ The mirroring feature wont't block a `git push`, it will just raise warnings. Th
 To add the remote, run the following commits inside the bare repository:
 
     # su -s /bin/bash - blogc
-    $ git remote add mirror $YOUR_GIT_MIRROR_URL
+    $ git remote add --mirror=push mirror $YOUR_GIT_MIRROR_URL
 
 ### Caveats of repository mirroring with SSH
 
