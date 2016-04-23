@@ -104,7 +104,9 @@ git_shell(int argc, char *argv[])
     char *repo = NULL;
     char *command_orig = NULL;
     char *command_name = NULL;
-    char *command_new = NULL;
+    char command_new[BUFFER_SIZE];
+
+    bool exec_git = false;
 
     // validate git command
     size_t len = strlen(argv[2]);
@@ -250,15 +252,29 @@ git_exec:
     for (p = command_name; *p != ' ' && *p != '\0'; p++);
     if (*p == ' ')
         *p = '\0';
-    command_new = sb_strdup_printf("%s '%s'", command_name, repo);
 
-    execlp("git-shell", "git-shell", "-c", command_new, NULL);
+    if (BUFFER_SIZE < (strlen(command_name) + strlen(repo) + 4)) {
+        fprintf(stderr, "error: git command is too big\n");
+        rv = 1;
+        goto cleanup;
+    }
+
+    if (snprintf(command_new, BUFFER_SIZE, "%s '%s'", command_name, repo))
+        exec_git = true;
 
 cleanup:
     free(repo);
     free(command_orig);
     free(command_name);
-    free(command_new);
+
+    if (exec_git) {
+        execlp("git-shell", "git-shell", "-c", command_new, NULL);
+
+        // execlp only returns on error, then something bad happened
+        fprintf(stderr, "error: failed to execute git-shell\n");
+        rv = 1;
+    }
+
     return rv;
 }
 
