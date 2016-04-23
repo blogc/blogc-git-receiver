@@ -254,7 +254,7 @@ git_exec:
         *p = '\0';
 
     if (BUFFER_SIZE < (strlen(command_name) + strlen(repo) + 4)) {
-        fprintf(stderr, "error: git command is too big\n");
+        fprintf(stderr, "error: git-shell command is too big\n");
         rv = 1;
         goto cleanup;
     }
